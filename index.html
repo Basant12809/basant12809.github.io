@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6f236f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Besso Cash">
+<link rel="manifest" href="manifest.json">
+<title>Besso Cash — إدارة فلوسك</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Tahoma,sans-serif;background:#f6f4f8;color:#24212a}
+header{background:linear-gradient(135deg,#17131d,#6c1f75,#b51d76);color:#fff;padding:22px 16px 28px;border-radius:0 0 24px 24px}
+h1{margin:0 0 5px;font-size:29px;letter-spacing:.2px}.sub{opacity:.85;font-size:13px}
+.wrap{max-width:900px;margin:auto;padding:14px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:-18px}
+.card{background:#fff;border-radius:17px;padding:15px;box-shadow:0 5px 18px #0000000c}.label{font-size:12px;color:#777}.num{font-size:21px;font-weight:800;margin-top:6px}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:16px 0}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tools button{flex:1;min-width:120px}nav button,.btn{border:0;border-radius:12px;padding:11px;background:#fff;color:#4b2452;font-weight:700;cursor:pointer}
+nav button.active,.btn.primary{background:#6f236f;color:#fff}
+section{display:none}.active-section{display:block}
+.panel{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px}.panel h2{font-size:18px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}label{font-size:12px;color:#666;display:block}input,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:11px;margin-top:5px;background:#fff;font:inherit}
+.full{grid-column:1/-1}.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.list{display:grid;gap:8px}.item{border:1px solid #eee;border-radius:13px;padding:11px;display:flex;justify-content:space-between;gap:10px}.small{font-size:12px;color:#777}.profit{color:#16834a;font-weight:800}.danger{color:#b3263a;font-weight:800}
+.empty{text-align:center;color:#999;padding:20px}
+.total{font-size:25px;font-weight:900}
+@media(max-width:520px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.full{grid-column:auto}nav{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>Besso Cash 💸</h1><div class="sub">Your Money. Your Business. Your Control.</div></div></header>
+<div class="wrap">
+<div class="cards">
+ <div class="card"><div class="label">إجمالي المسجل</div><div class="num" id="total">0 ج.م</div></div>
+ <div class="card"><div class="label">أرباح المشروع</div><div class="num" id="profits">0 ج.م</div></div>
+ <div class="card"><div class="label">ديبوزت العملاء</div><div class="num" id="deposits">0 ج.م</div></div>
+ <div class="card"><div class="label">المستحق لأختي</div><div class="num" id="sister">0 ج.م</div></div>
+</div>
+
+<nav>
+<button class="active" onclick="show('home',this)">الرئيسية</button>
+<button onclick="show('orders',this)">📦 الطلبات</button>
+<button onclick="show('money',this)">💸 حركة الفلوس</button>
+<button onclick="show('debts',this)">🤝 السُلف</button>
+</nav>
+<div style="text-align:center;margin:10px 0 2px;font-weight:800;color:#6f236f">Hi Besso 👋</div><div class="tools">
+<button class="btn" onclick="backup()">⬇️ نسخة احتياطية</button>
+<button class="btn" onclick="document.getElementById('restoreFile').click()">⬆️ استرجاع نسخة</button>
+<button class="btn" onclick="installApp()">📲 تثبيت التطبيق</button>
+<input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restore(event)">
+</div>
+
+<section id="home" class="active-section">
+<div class="panel"><h2>ملخص سريع</h2><div id="summary"></div></div>
+<div class="panel"><h2>تنبيه</h2><div class="small">الديبوزت ورأس المال والسُلف ليست أرباحًا. البرنامج يفصلهم عن الربح حتى تعرفي المتاح الحقيقي.</div></div>
+</section>
+
+<section id="orders">
+<div class="panel"><h2>إضافة أوردر</h2>
+<div class="grid">
+<label>اسم العميل<input id="cname" placeholder="مثال: سارة"></label>
+<label>المنتج<input id="product" placeholder="اسم المنتج"></label>
+<label>تكلفة الشراء<input id="cost" type="number" min="0" placeholder="0"></label>
+<label>سعر البيع<input id="sale" type="number" min="0" placeholder="0"></label>
+<label>الديبوزت<input id="dep" type="number" min="0" placeholder="0"></label>
+<label>الشحن/مصاريف الأوردر<input id="ship" type="number" min="0" placeholder="0"></label>
+</div>
+<div class="actions"><button class="btn primary" onclick="addOrder()">حفظ الأوردر</button></div>
+</div>
+<div class="panel"><h2>الأوردرات</h2><div id="ordersList" class="list"></div></div>
+</section>
+
+<section id="money">
+<div class="panel"><h2>تسجيل حركة فلوس</h2>
+<div class="grid">
+<label>المبلغ<input id="amount" type="number" min="0"></label>
+<label>نوع الحركة<select id="kind">
+<option value="personal">فلوسي الشخصية</option><option value="capital">رأس مال المشروع</option>
+<option value="salary">المرتب</option><option value="expense">مصروف شخصي</option>
+<option value="business_expense">مصروف مشروع</option><option value="other">أخرى</option>
+</select></label>
+<label class="full">ملاحظة<input id="note" placeholder="مثال: مرتب أغسطس"></label>
+</div>
+<div class="actions"><button class="btn primary" onclick="addMoney()">حفظ الحركة</button></div>
+</div>
+<div class="panel"><h2>الحركات</h2><div id="moneyList" class="list"></div></div>
+</section>
+
+<section id="debts">
+<div class="panel"><h2>فلوس أختي</h2>
+<div class="grid">
+<label>المبلغ<input id="loan" type="number" min="0"></label>
+<label>نوع العملية<select id="loanKind"><option value="borrow">استلفت</option><option value="repay">سددت</option></select></label>
+<label class="full">ملاحظة<input id="loanNote" placeholder="اختي"></label>
+</div>
+<div class="actions"><button class="btn primary" onclick="addLoan()">حفظ</button></div>
+</div>
+<div class="panel"><div class="total" id="debtTotal">المستحق: 0 ج.م</div><div id="loanList" class="list" style="margin-top:12px"></div></div>
+</section>
+</div>
+
+<script>
+const key='flosy_v1';
+let db=JSON.parse(localStorage.getItem(key)||'{"orders":[],"money":[],"loans":[]}');
+const moneyFmt=n=>new Intl.NumberFormat('ar-EG').format(Math.round(n||0))+' ج.م';
+function save(){localStorage.setItem(key,JSON.stringify(db));render()}
+function show(id,btn){document.querySelectorAll('section').forEach(x=>x.classList.remove('active-section'));document.getElementById(id).classList.add('active-section');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
+function addOrder(){
+ let cname=document.getElementById('cname').value.trim(),product=document.getElementById('product').value.trim();
+ let cost=+document.getElementById('cost').value||0,sale=+document.getElementById('sale').value||0,dep=+document.getElementById('dep').value||0,ship=+document.getElementById('ship').value||0;
+ if(!cname||!product){alert('اكتبي اسم العميل والمنتج');return}
+ db.orders.unshift({cname,product,cost,sale,dep,ship,date:new Date().toLocaleDateString('ar-EG')});['cname','product','cost','sale','dep','ship'].forEach(id=>document.getElementById(id).value='');save();
+}
+function addMoney(){let amount=+document.getElementById('amount').value||0;if(!amount){alert('اكتبي المبلغ');return}db.money.unshift({amount,kind:document.getElementById('kind').value,note:document.getElementById('note').value,date:new Date().toLocaleDateString('ar-EG')});document.getElementById('amount').value='';document.getElementById('note').value='';save()}
+function addLoan(){let amount=+document.getElementById('loan').value||0;if(!amount){alert('اكتبي المبلغ');return}db.loans.unshift({amount,kind:document.getElementById('loanKind').value,note:document.getElementById('loanNote').value,date:new Date().toLocaleDateString('ar-EG')});document.getElementById('loan').value='';document.getElementById('loanNote').value='';save()}
+
+function delOrder(i){if(confirm('حذف هذا الأوردر؟')){db.orders.splice(i,1);save()}}
+function editOrder(i){
+ const o=db.orders[i];
+ document.getElementById('cname').value=o.cname; document.getElementById('product').value=o.product;
+ document.getElementById('cost').value=o.cost; document.getElementById('sale').value=o.sale;
+ document.getElementById('dep').value=o.dep; document.getElementById('ship').value=o.ship;
+ db.orders.splice(i,1); save(); show('orders',document.querySelectorAll('nav button')[1]);
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function delMoney(i){if(confirm('حذف حركة الفلوس؟')){db.money.splice(i,1);save()}}
+function delLoan(i){if(confirm('حذف عملية السلفة؟')){db.loans.splice(i,1);save()}}
+
+function backup(){
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+ a.download='flosy-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ alert('تم إنشاء النسخة الاحتياطية. احتفظي بالملف في Google Drive أو واتساب أو أي مكان آمن.');
+}
+function restore(e){
+ const file=e.target.files[0]; if(!file)return;
+ const r=new FileReader();
+ r.onload=()=>{try{
+   const data=JSON.parse(r.result);
+   if(!data.orders||!data.money||!data.loans) throw new Error();
+   if(confirm('استرجاع النسخة سيستبدل البيانات الحالية. هل أنتِ متأكدة؟')){db=data;save();alert('تم استرجاع البيانات بنجاح ❤️')}
+ }catch(err){alert('ملف النسخة الاحتياطية غير صالح.')}};
+ r.readAsText(file); e.target.value='';
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
+async function installApp(){
+ if(deferredPrompt){deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null}
+ else alert('لو ظهر لكِ خيار "إضافة إلى الشاشة الرئيسية" من قائمة المتصفح، اختاريه. التثبيت الكامل يحتاج فتح البرنامج من رابط مستضاف.');
+}
+
+function render(){
+ let profit=db.orders.reduce((s,o)=>s+(o.sale-o.cost-o.ship),0);
+ let deps=db.orders.reduce((s,o)=>s+o.dep,0);
+ let sister=db.loans.reduce((s,x)=>s+(x.kind==='borrow'?x.amount:-x.amount),0);
+ let income=db.money.filter(x=>['personal','capital','salary'].includes(x.kind)).reduce((s,x)=>s+x.amount,0);
+ let exp=db.money.filter(x=>['expense','business_expense'].includes(x.kind)).reduce((s,x)=>s+x.amount,0);
+ document.getElementById('total').textContent=moneyFmt(income-exp);
+ document.getElementById('profits').textContent=moneyFmt(profit);
+ document.getElementById('deposits').textContent=moneyFmt(deps);
+ document.getElementById('sister').textContent=moneyFmt(sister);
+ document.getElementById('debtTotal').textContent='المستحق لأختك: '+moneyFmt(sister);
+ document.getElementById('summary').innerHTML=`<div class="grid">
+ <div>عدد الأوردرات<br><b>${db.orders.length}</b></div><div>إجمالي تكلفة الأوردرات<br><b>${moneyFmt(db.orders.reduce((s,o)=>s+o.cost+o.ship,0))}</b></div>
+ <div>إجمالي المبيعات<br><b>${moneyFmt(db.orders.reduce((s,o)=>s+o.sale,0))}</b></div><div>المصروفات المسجلة<br><b>${moneyFmt(exp)}</b></div></div>`;
+ document.getElementById('ordersList').innerHTML=db.orders.length?db.orders.map((o,i)=>`<div class="item"><div><b>${o.cname}</b> — ${o.product}<div class="small">${o.date} · ديبوزت ${moneyFmt(o.dep)}</div></div><div><span class="profit">${moneyFmt(o.sale-o.cost-o.ship)}</span><br><span class="small">بيع ${moneyFmt(o.sale)}</span><br><button class="btn" onclick="editOrder(${i})">تعديل</button> <button class="btn" onclick="delOrder(${i})">حذف</button></div></div>`).join(''):'<div class="empty">لسه مفيش أوردرات</div>';
+ document.getElementById('moneyList').innerHTML=db.money.length?db.money.map(x=>`<div class="item"><div><b>${labelKind(x.kind)}</b><div class="small">${x.note||''} · ${x.date}</div></div><div>${moneyFmt(x.amount)}<br><button class="btn" onclick="delMoney(${db.money.indexOf(x)})">حذف</button></div></div>`).join(''):'<div class="empty">لسه مفيش حركات</div>';
+ document.getElementById('loanList').innerHTML=db.loans.length?db.loans.map(x=>`<div class="item"><div><b>${x.kind==='borrow'?'استلفت':'سددت'}</b><div class="small">${x.note||''} · ${x.date}</div></div><div class="${x.kind==='borrow'?'danger':'profit'}">${x.kind==='borrow'?'+':'-'}${moneyFmt(x.amount)}<br><button class="btn" onclick="delLoan(${db.loans.indexOf(x)})">حذف</button></div></div>`).join(''):'<div class="empty">مفيش عمليات سُلف</div>';
+}
+function labelKind(k){return {personal:'فلوسي الشخصية',capital:'رأس مال المشروع',salary:'المرتب',expense:'مصروف شخصي',business_expense:'مصروف مشروع',other:'أخرى'}[k]}
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
